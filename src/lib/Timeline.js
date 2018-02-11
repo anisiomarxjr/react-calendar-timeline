@@ -11,6 +11,9 @@ import VerticalLines from './lines/VerticalLines'
 import HorizontalLines from './lines/HorizontalLines'
 import TodayLine from './lines/TodayLine'
 import CursorLine from './lines/CursorLine'
+import { coordinateToTimeRatio } from './utility/calendar'
+
+import {debounce} from 'throttle-debounce';
 
 import windowResizeDetector from '../resize-detector/window'
 
@@ -985,6 +988,68 @@ export default class ReactCalendarTimeline extends Component {
     })
   }
 
+  handleDropFromOutside = (e) => {
+    const groupOrder = this.state.newGroupOrder
+
+    this.setState({
+      isDragging: false,
+      dragStartPosition: null,
+      dragLastPosition: null,
+      draggingItem: null,
+      dragTime: null,
+      newGroupOrder: null
+    })
+
+    this.props.addItem(this.state.dragTime,groupOrder);
+
+    console.log('drop drop drop')
+  }
+
+  dragGroupDelta = e => {
+    const { groupTops, topOffset } = this.state
+
+    let groupDelta = 0
+
+    for (var key of Object.keys(groupTops)) {
+      var item = groupTops[key]
+      if (e.pageY - topOffset > item) {
+        groupDelta = parseInt(key, 10)
+      } else {
+        break
+      }
+    }
+
+    return groupDelta;
+
+  }
+
+  handleDragOver = e => {
+    e.persist()
+    e.preventDefault()
+
+    debounce(500, () => {
+
+      const boundingRect = this.scrollComponent.getBoundingClientRect()
+
+      const ratio = (e.pageX - boundingRect.left) / boundingRect.width
+      const { visibleTimeStart, visibleTimeEnd, width } = this.state
+
+      const timeWindow = visibleTimeEnd - visibleTimeStart
+      const currentTime = visibleTimeStart + timeWindow * ratio
+
+      const groupOrder = this.dragGroupDelta(e)
+
+      const group = this.props.groups[groupOrder]
+
+      this.setState({
+        draggingItem: 0,
+        dragTime: currentTime,
+        newGroupOrder: groupOrder,
+        dragGroupTitle: group.title
+      })
+    })()
+  }
+
   handleCanvasMouseEnter = e => {
     const { showCursorLine } = this.props
     if (showCursorLine) {
@@ -1438,6 +1503,10 @@ export default class ReactCalendarTimeline extends Component {
     }
   }
 
+  handleDropJucca(e) {
+    console.log('drop drop drop')
+  }
+
   childrenWithProps(
     canvasTimeStart,
     canvasTimeEnd,
@@ -1569,6 +1638,8 @@ export default class ReactCalendarTimeline extends Component {
             onMouseMove={this.handleMouseMove}
             onMouseUp={this.handleMouseUp}
             onMouseLeave={this.handleMouseLeave}
+            onDrop={this.handleDropFromOutside}
+            onDragOver={this.handleDragOver}
           >
             <div
               ref={el => (this.canvasComponent = el)}

@@ -6,8 +6,12 @@ import Timeline from 'react-calendar-timeline'
 
 import generateFakeData from '../generate-fake-data'
 
-var minTime = moment().add(-6, 'months').valueOf()
-var maxTime = moment().add(6, 'months').valueOf()
+var minTime = moment()
+  .add(-6, 'months')
+  .valueOf()
+var maxTime = moment()
+  .add(6, 'months')
+  .valueOf()
 
 var keys = {
   groupIdKey: 'id',
@@ -22,12 +26,20 @@ var keys = {
 }
 
 export default class App extends Component {
-  constructor (props) {
+  constructor(props) {
     super(props)
 
-    const { groups, items } = generateFakeData()
-    const defaultTimeStart = moment().startOf('day').toDate()
-    const defaultTimeEnd = moment().startOf('day').add(1, 'day').toDate()
+    let { groups, items } = generateFakeData()
+
+    // groups = groups.slice(1, 10)
+
+    const defaultTimeStart = moment()
+      .startOf('day')
+      .toDate()
+    const defaultTimeEnd = moment()
+      .startOf('day')
+      .add(1, 'day')
+      .toDate()
 
     this.state = {
       groups,
@@ -67,11 +79,16 @@ export default class App extends Component {
     const group = groups[newGroupOrder]
 
     this.setState({
-      items: items.map(item => item.id === itemId ? Object.assign({}, item, {
-        start: dragTime,
-        end: dragTime + (item.end - item.start),
-        group: group.id
-      }) : item)
+      items: items.map(
+        item =>
+          item.id === itemId
+            ? Object.assign({}, item, {
+                start: dragTime,
+                end: dragTime + (item.end - item.start),
+                group: group.id
+              })
+            : item
+      )
     })
 
     console.log('Moved', itemId, dragTime, newGroupOrder)
@@ -81,13 +98,22 @@ export default class App extends Component {
     const { items } = this.state
 
     this.setState({
-      items: items.map(item => item.id === itemId ? Object.assign({}, item, {
-        start: edge === 'left' ? time : item.start,
-        end: edge === 'left' ? item.end : time
-      }) : item)
+      items: items.map(
+        item =>
+          item.id === itemId
+            ? Object.assign({}, item, {
+                start: edge === 'left' ? time : item.start,
+                end: edge === 'left' ? item.end : time
+              })
+            : item
+      )
     })
 
     console.log('Resized', itemId, time, edge)
+  }
+
+  handleMouseMove = e => {
+    console.log('shjdflkdajsh')
   }
 
   // this limits the timeline to -6 months ... +6 months
@@ -105,11 +131,35 @@ export default class App extends Component {
 
   moveResizeValidator = (action, item, time, resizeEdge) => {
     if (time < new Date().getTime()) {
-      var newTime = Math.ceil(new Date().getTime() / (15 * 60 * 1000)) * (15 * 60 * 1000)
+      var newTime =
+        Math.ceil(new Date().getTime() / (15 * 60 * 1000)) * (15 * 60 * 1000)
       return newTime
     }
 
     return time
+  }
+
+  addItem = (start, group) => {
+    const items = this.state.items
+    items.push({
+      id: '989',
+      group: group + '',
+      title: 'Jucca',
+      start,
+      end: start + 3600000,
+      canMove: true,
+      canResize: 'right',
+      className: '',
+      itemProps: {
+        'data-tip': 'lorem ipsum dolor'
+      }
+    })
+
+    this.setState({
+      items
+    })
+
+    this.forceUpdate()
   }
 
   // itemRenderer = ({ item }) => {
@@ -129,53 +179,28 @@ export default class App extends Component {
   //   )
   // }
 
-  render () {
+  render() {
     const { groups, items, defaultTimeStart, defaultTimeEnd } = this.state
 
     return (
-      <Timeline groups={groups}
-                items={items}
-                keys={keys}
-                fixedHeader='fixed'
-                fullUpdate
+      <div>
+        <Timeline
+          groups={groups}
+          items={items}
+          keys={keys}
+          defaultTimeStart={defaultTimeStart}
+          defaultTimeEnd={defaultTimeEnd}
+          onCanvasClick={this.handleCanvasClick}
+          onItemMove={this.handleItemMove}
+          onMouseMove={this.handleMouseMove}
+          addItem={this.addItem}
+        />
 
-                sidebarWidth={150}
-                sidebarContent={<div>Above The Left</div>}
-                rightSidebarWidth={150}
-                rightSidebarContent={<div>Above The Right</div>}
-
-                canMove
-                canResize='right'
-                canSelect
-
-                itemsSorted
-                itemTouchSendsClick={false}
-                stackItems
-                itemHeightRatio={0.75}
-
-                showCursorLine
-
-                // resizeDetector={containerResizeDetector}
-
-                defaultTimeStart={defaultTimeStart}
-                defaultTimeEnd={defaultTimeEnd}
-
-                // itemRenderer={this.itemRenderer}
-                // groupRenderer={this.groupRenderer}
-
-                onCanvasClick={this.handleCanvasClick}
-                onCanvasContextMenu={this.handleCanvasContextMenu}
-
-                onItemClick={this.handleItemClick}
-                onItemSelect={this.handleItemSelect}
-                onItemContextMenu={this.handleItemContextMenu}
-                onItemMove={this.handleItemMove}
-                onItemResize={this.handleItemResize}
-                onItemDoubleClick={this.handleItemDoubleClick}
-
-                onTimeChange={this.handleTimeChange}
-
-                moveResizeValidator={this.moveResizeValidator} />
+        <div
+          style={{ width: '100px', height: '100px', backgroundColor: 'black' }}
+          draggable="true"
+        />
+      </div>
     )
   }
 }
